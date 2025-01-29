@@ -1,60 +1,39 @@
-from CodeWriter import *
-from Command import *
-from Parser import *
+import os
+import sys
+from pathlib import Path
+
+class App:
+    @staticmethod
+    def from_file(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                return file.read()
+        except IOError as e:
+            print(f"Error reading file {file_path}: {e}")
+            return ""
+    
+    @staticmethod
+    def main(args):
+        if len(args) != 2:
+            print("Forneça um único argumento de caminho de arquivo.", file=sys.stderr)
+            sys.exit(1)
+
+        file_path = Path(args[1])
+
+        if not file_path.exists():
+            print("O arquivo não existe.", file=sys.stderr)
+            sys.exit(1)
 
 
-def main():
-    input = """
-    // This file is part of www.nand2tetris.org
-    // and the book "The Elements of Computing Systems"
-    // by Nisan and Schocken, MIT Press.
-    // File name: projects/07/MemoryAccess/BasicTest/BasicTest.vm
+        if file_path.is_file():
+            if file_path.suffix != ".vm":
+                print("Forneça um nome de arquivo que termine com .vm", file=sys.stderr)
+                sys.exit(1)
 
-    // Executes pop and push commands using the virtual memory segments.
-    push constant 10
-    pop local 0
-    push constant 21
-    push constant 22
-    pop argument 2
-    pop argument 1
-    push constant 36
-    pop this 6
-    push constant 42
-    push constant 45
-    pop that 5
-    pop that 2
-    push constant 510
-    pop temp 6
-    push local 0
-    push that 5
-    add
-    push argument 1
-    sub
-    push this 6
-    push this 6
-    add
-    sub
-    push temp 6
-    add
-    """
-    input = "push argument 3"
-
-    code = CodeWriter()
-    parser = Parser(input)
-    while parser.has_more_commands():
-        command = parser.next_command()
-        if command.type == "ADD":
-            code.write_arithmetic_add()
-        elif command.type == "SUB":
-            code.write_arithmetic_sub()
-        elif command.type == "PUSH":
-            code.write_push(command.args[0], int(command.args[1]))
-        elif command.type == "POP":
-            code.write_pop(command.args[0], int(command.args[1]))
-        else:
-            print(f"{command.type} not implemented")
-
-    print(code.code_output())
+            input_file_name = str(file_path)
+            print(input_file_name)
+            output_file_name = input_file_name.replace(".vm", ".asm")
+            print(output_file_name)
 
 if __name__ == "__main__":
-    main()
+    App.main(sys.argv)
