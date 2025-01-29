@@ -84,3 +84,17 @@ class CodeWriter:
             self.write("@R13")
             self.write("A=M")
             self.write("M=D")
+
+    def write(self, s):
+        self.output.append(f"{s}\n")
+        
+    def code_output(self):
+        return "".join(self.output)
+
+    def close(self): 
+
+        try:
+            with open(self.output_file_name, "w") as output_stream:
+                output_stream.write(self.code_output())
+        except IOError as e:
+            print(f"Error writing to file: {e}")
