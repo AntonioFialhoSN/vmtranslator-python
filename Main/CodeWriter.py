@@ -85,9 +85,126 @@ class CodeWriter:
             self.write("A=M")
             self.write("M=D")
 
+    def write_arithmetic_add(self):
+        self.write("@SP // add")
+        self.write("M=M-1")
+        self.write("A=M")
+        self.write("D=M")
+        self.write("A=A-1")
+        self.write("M=D+M")
+
+    def write_arithmetic_sub(self):
+        self.write("@SP // sub")
+        self.write("M=M-1")
+        self.write("A=M")
+        self.write("D=M")
+        self.write("A=A-1")
+        self.write("M=M-D")
+
+    def write_arithmetic_neg(self):
+        self.write("@SP // neg")
+        self.write("A=M")
+        self.write("A=A-1")
+        self.write("M=-M")
+
+    def write_arithmetic_and(self):
+        self.write("@SP // and")
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("A=A-1")
+        self.write("M=D&M")
+
+    def write_arithmetic_or(self):
+        self.write("@SP // or")
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("A=A-1")
+        self.write("M=D|M")
+
+    def write_arithmetic_not(self):
+        self.write("@SP // not")
+        self.write("A=M")
+        self.write("A=A-1")
+        self.write("M=!M")
+
+    def write_arithmetic_eq(self):
+        label = f"JEQ_{self.module_name}_{self.label_count}"
+        self.write("@SP // eq")
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@SP")
+        self.write("AM=M-1")
+        self.write("D=M-D")
+        self.write(f"@{label}")
+        self.write("D;JEQ")
+        self.write("D=1")
+        self.write(f"({label})")
+        self.write("D=D-1")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+        self.label_count += 1
+
+    def write_arithmetic_gt(self):
+        label_true = f"JGT_TRUE_{self.module_name}_{self.label_count}"
+        label_false = f"JGT_FALSE_{self.module_name}_{self.label_count}"
+        self.write("@SP // gt")
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@SP")
+        self.write("AM=M-1")
+        self.write("D=M-D")
+        self.write(f"@{label_true}")
+        self.write("D;JGT")
+        self.write("D=0")
+        self.write(f"@{label_false}")
+        self.write("0;JMP")
+        self.write(f"({label_true})")
+        self.write("D=-1")
+        self.write(f"({label_false})")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+        self.label_count += 1
+
+    def write_arithmetic_lt(self):
+        label_true = f"JLT_TRUE_{self.module_name}_{self.label_count}"
+        label_false = f"JLT_FALSE_{self.module_name}_{self.label_count}"
+        self.write("@SP // lt")
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@SP")
+        self.write("AM=M-1")
+        self.write("D=M-D")
+        self.write(f"@{label_true}")
+        self.write("D;JLT")
+        self.write("D=0")
+        self.write(f"@{label_false}")
+        self.write("0;JMP")
+        self.write(f"({label_true})")
+        self.write("D=-1")
+        self.write(f"({label_false})")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+        self.label_count += 1
+
+
+    def write_call(self, func_name, num_args):
+        comment = f"// call {func_name} {num_args}"
+        return_addr = f"{func_name}_RETURN_{self.call_count}"
+        self.call_count += 1
+        self.write(f"@{return_addr} {comment}")  # push return-addr
+
     def write(self, s):
         self.output.append(f"{s}\n")
-        
+
     def code_output(self):
         return "".join(self.output)
 
