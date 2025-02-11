@@ -11,6 +11,12 @@ class Command:
         NOT = "NOT"
         PUSH = "PUSH"
         POP = "POP"
+        LABEL = "LABEL"
+        GOTO = "GOTO"
+        IF = "IF"
+        RETURN = "RETURN"
+        CALL = "CALL"
+        FUNCTION = "FUNCTION"
 
     def __init__(self, command):
         if command[0] == "if-goto":

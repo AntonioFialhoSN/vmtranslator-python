@@ -44,6 +44,18 @@ class App:
                     code.write_push(command.args[0], int(command.args[1]))
                 case "POP":
                     code.write_pop(command.args[0], int(command.args[1]))
+                case "GOTO":
+                    code.write_goto(command.args[0])                
+                case "IF":
+                    code.write_if(command.args[0])
+                case "LABEL":
+                    code.write_label(command.args[0])                    
+                case "RETURN":
+                    code.write_return()
+                case "CALL":
+                    code.write_call(command.args[0], int(command.args[1]))
+                case "FUNCTION":
+                    code.write_function(command.args[0], int(command.args[1]))
                 case _:
                     print(f"{command.type} não implementado")
 

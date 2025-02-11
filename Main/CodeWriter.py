@@ -195,12 +195,170 @@ class CodeWriter:
         self.write("M=M+1")
         self.label_count += 1
 
+    def  write_frame_push(self, value):
+        self.write(f"@{value}")
+        self.write("D=M")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+    
 
+    def  write_label(self, label):
+        self.write(f"({label})")
+
+    def  write_goto(self, label):
+        self.write(f"@{label}")
+        self.write("0;JMP")
+    
+    def write_if(self, label):
+        self.write("@SP")
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("M=0")
+        self.write(f"@{label}")
+        self.write("D;JNE")
+    
+    
+    def write_function(self, func_name, nLocals):
+    
+        loopLabel = f"{func_name}_INIT_LOCALS_LOOP"
+        loopEndLabel = f"{func_name}_INIT_LOCALS_END"
+    
+        self.write(f"({func_name})// initializa local variables")
+        self.write(f"@{nLocals}")
+        self.write("D=A")
+        self.write("@R13") # temp
+        self.write("M=D")
+        self.write(f"({loopLabel})")
+        self.write(f"@{loopEndLabel}")
+        self.write("D;JEQ")
+        self.write("@0")
+        self.write("D=A")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+        self.write("@R13")
+        self.write("MD=M-1")
+        self.write(f"@{loopLabel}")
+        self.write("0;JMP")
+        self.write(f"({loopEndLabel})")
+
+    
     def write_call(self, func_name, num_args):
         comment = f"// call {func_name} {num_args}"
+
+        #    push return-address     // (using the label declared below)
+        #    push LCL                // save LCL of the calling function
+        #    push ARG                // save ARG of the calling function
+        #    push THIS               // save THIS of the calling function
+        #    push THAT               // save THAT of the calling function
+        #    ARG = SP-n-5            // reposition ARG (n = number of args)
+        #    LCL = SP                // reposiiton LCL
+        #    goto f                  // transfer control
+        #    (return-address)        // declare a label for the return-address
+    
         return_addr = f"{func_name}_RETURN_{self.call_count}"
+
         self.call_count += 1
+
         self.write(f"@{return_addr} {comment}")  # push return-addr
+        self.write("D=A")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+    
+        self.write_frame_push("LCL")
+        self.write_frame_push("ARG")
+        self.write_frame_push("THIS")
+        self.write_frame_push("THAT")
+    
+        self.write(f"@{num_args}") # ARG = SP-n-5
+        self.write("D=A")
+        self.write("@5")
+        self.write("D=D+A")
+        self.write("@SP")
+        self.write("D=M-D")
+        self.write("@ARG")
+        self.write("M=D")
+    
+        self.write("@SP") ; # LCL = SP
+        self.write("D=M")
+        self.write("@LCL")
+        self.write("M=D")
+    
+        self.write_goto(func_name)
+    
+        self.write(f"({return_addr})") # (return-address)
+
+    def  write_return(self):
+
+        # FRAME = LCL         // FRAME is a temporary var
+        # RET = *(FRAME-5)    // put the return-address in a temporary var
+        # *ARG = pop()        // reposition the return value for the caller
+        # SP = ARG + 1        // restore SP of the caller
+        # THAT = *(FRAME - 1) // restore THAT of the caller
+        # THIS = *(FRAME - 2) // restore THIS of the caller
+        # ARG = *(FRAME - 3)  // restore ARG of the caller
+        # LCL = *(FRAME - 4)  // restore LCL of the caller
+        # goto RET            // goto return-address (in the caller's code)
+
+    
+        self.write("@LCL") # FRAME = LCL
+        self.write("D=M")
+    
+        self.write("@R13") # R13 -> FRAME
+        self.write("M=D")
+    
+        self.write("@5") # RET = *(FRAME-5)
+        self.write("A=D-A")
+        self.write("D=M")
+        self.write("@R14") # R14 -> RET
+        self.write("M=D")
+    
+        self.write("@SP") # *ARG = pop()
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@ARG")
+        self.write("A=M")
+        self.write("M=D")
+    
+        self.write("D=A") # SP = ARG+1
+        self.write("@SP")
+        self.write("M=D+1")
+    
+        self.write("@R13") # THAT = *(FRAME-1)
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@THAT")
+        self.write("M=D")
+    
+        self.write("@R13") # THIS = *(FRAME-2)
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@THIS")
+        self.write("M=D")
+    
+        self.write("@R13") # ARG = *(FRAME-3)
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@ARG")
+        self.write("M=D")
+    
+        self.write("@R13") # LCL = *(FRAME-4)
+        self.write("AM=M-1")
+        self.write("D=M")
+        self.write("@LCL")
+        self.write("M=D")
+    
+        self.write("@R14") # goto RET
+        self.write("A=M")
+        self.write("0;JMP")
 
     def write(self, s):
         self.output.append(f"{s}\n")
